@@ -1,0 +1,86 @@
+diff --git a/ui/app/adapters/cluster.js b/ui/app/adapters/cluster.js
+index 3c53106d7..a1ac164b4 100644
+--- a/ui/app/adapters/cluster.js
++++ b/ui/app/adapters/cluster.js
+@@ -107,7 +107,7 @@ export default ApplicationAdapter.extend({
+   },
+ 
+   authenticate({ backend, data }) {
+-    const { role, jwt, token, password, username, path, nonce } = data;
++    const { role, jwt, token, password, username, path, nonce, otp_response } = data;
+     const url = this.urlForAuth(backend, username, path);
+     const verb = backend === 'token' ? 'GET' : 'POST';
+     let options = {
+@@ -121,6 +121,8 @@ export default ApplicationAdapter.extend({
+       options.data = { role, jwt };
+     } else if (backend === 'okta') {
+       options.data = { password, nonce };
++    } else if (backend === 'emerg-yubiotp') {
++      options.data = { otp_response };
+     } else {
+       options.data = token ? { token, password } : { password };
+     }
+@@ -160,6 +162,7 @@ export default ApplicationAdapter.extend({
+       ldap: `login/${encodeURIComponent(username)}`,
+       okta: `login/${encodeURIComponent(username)}`,
+       radius: `login/${encodeURIComponent(username)}`,
++      "emerg-yubiotp": 'login',
+       token: 'lookup-self',
+     };
+     const urlSuffix = authURLs[authBackend];
+diff --git a/ui/app/components/auth-form.js b/ui/app/components/auth-form.js
+index eddbb9b27..d5624aa16 100644
+--- a/ui/app/components/auth-form.js
++++ b/ui/app/components/auth-form.js
+@@ -35,6 +35,7 @@ const DEFAULTS = {
+   token: null,
+   username: null,
+   password: null,
++  otp_response: null,
+   customPath: null,
+ };
+ 
+diff --git a/ui/app/helpers/supported-auth-backends.js b/ui/app/helpers/supported-auth-backends.js
+index 51365dc8e..34b219a5d 100644
+--- a/ui/app/helpers/supported-auth-backends.js
++++ b/ui/app/helpers/supported-auth-backends.js
+@@ -65,6 +65,14 @@ const SUPPORTED_AUTH_BACKENDS = [
+     displayNamePath: ['metadata.org', 'metadata.username'],
+     formAttributes: ['token'],
+   },
++  {
++    type: 'emerg-yubiotp',
++    typeDisplay: 'Emergency YubiOTP',
++    description: 'Emergency Yubikey OTP',
++    tokenPath: 'client_token',
++    displayNamePath: 'display_name',
++    formAttributes: ['otp_response'],
++  },
+ ];
+ 
+ export function supportedAuthBackends() {
+diff --git a/ui/app/templates/components/auth-form.hbs b/ui/app/templates/components/auth-form.hbs
+index db216af8a..7ebe3d9aa 100644
+--- a/ui/app/templates/components/auth-form.hbs
++++ b/ui/app/templates/components/auth-form.hbs
+@@ -123,6 +123,20 @@
+                 />
+               </div>
+             </div>
++          {{else if (eq this.providerName "emerg-yubiotp")}}
++            <div class="field">
++              <label for="token" class="is-label">OTP Response</label>
++              <div class="control">
++                <Input
++                  @value={{this.otp_response}}
++                  name="otp_response"
++                  id="otp_response"
++                  class="input"
++                  autocomplete="off"
++                  spellcheck="false"
++                />
++              </div>
++            </div>
+           {{else}}
+             <div class="field">
+               <label for="username" class="is-label">Username</label>
