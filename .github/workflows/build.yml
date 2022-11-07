@@ -27,7 +27,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: vault-ui
-        path: ../ui-dist
+        path: ui-dist
 
   build-plugin:
     # The type of runner that the job will run on
