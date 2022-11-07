@@ -57,5 +57,21 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
-    - name: Dummy
-      run: "true"
+    - name: Download UI
+      uses: actions/download-artifact@v3
+      with:
+        name: vault-ui
+    - name: Tarball UI
+      run: tar -czf vault-ui.tar.gz vault-ui
+    - name: Download package
+      uses: actions/download-artifact@v3
+      with:
+        name: vault-auth-emerg-yubiotp
+    - name: Upload Release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: true
+        files: |
+          vault-auth-emerg-yubiotp/*
+          vault-ui.tar.gz
