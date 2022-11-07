@@ -44,6 +44,25 @@ LD_FLAGS ?= \
 # List of tests to run
 TEST ?= ./...
 
+# Check that given variables are set and all have non-empty values,
+# die with an error otherwise.
+#
+# Params:
+#   1. Variable name(s) to test.
+#   2. (optional) Error message to print.
+check_defined = \
+    $(strip $(foreach 1,$1, \
+        $(call __check_defined,$1,$(strip $(value 2)))))
+__check_defined = \
+    $(if $(value $1),, \
+      $(error Undefined $1$(if $2, ($2))))
+
+build-ui:
+	@echo "==> Building UI"
+	$(call check_defined, checkout, vault source tag to checkout)
+	docker run --rm -v $(PWD):/src --entrypoint /src/ui-patch/build.sh node:14 -c $(checkout)
+.PHONY: build-ui
+
 # Create a cross-compile target for every os-arch pairing. This will generate
 # a make target for each os/arch like "make linux/amd64" as well as generate a
 # meta target (build) for compiling everything.
@@ -53,6 +72,7 @@ define make-xc-target
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT} (excluded)"
   else
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT}"
+		@bin="pkg/${1}_${2}/${NAME}${3}"
 		@docker run \
 			--interactive \
 			--rm \
@@ -66,9 +86,10 @@ define make-xc-target
 				GOARCH="${2}" \
 				go build \
 				  -a \
-					-o="pkg/${1}_${2}/${NAME}${3}" \
+					-o="pkg/$(bin)" \
 					-ldflags "${LD_FLAGS}" \
 					-tags "${GOTAGS}"
+		@sha256sum $(bin) | cut -d' ' -f1 | tee $(bin).sha256
   endif
   .PHONY: $1/$2
 
