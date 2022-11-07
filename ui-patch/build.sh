@@ -36,6 +36,8 @@ cd vault
 
 if [ -n "$checkout" ]; then
   git checkout "$checkout"
+else
+  git checkout (cat /src/.vault-version)
 fi
 
 git apply < /src/ui-patch/vault-ui-auth-emerg-yubiotp.patch

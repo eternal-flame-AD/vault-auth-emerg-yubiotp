@@ -2,17 +2,7 @@ name: Build
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
-on:
-  workflow_dispatch:
-    # Inputs the workflow accepts.
-    inputs:
-      checkout:
-        # Friendly description to be shown in the UI instead of 'name'
-        description: 'Vault version to Checkout'
-        # Default value if no value is explicitly provided
-        default: 'master'
-        # Input has to be provided for the workflow to run
-        required: true
+on: push
 
 defaults:
   run:
@@ -31,7 +21,7 @@ jobs:
     - uses: actions/checkout@v3
     # Runs a single command using the runners shell
     - name: Build UI
-      run: docker run --rm -v $(pwd):/src --entrypoint /src/ui-patch/build.sh node:14 -c "${{ github.event.inputs.checkout }}"
+      run: docker run --rm -v $(pwd):/src --entrypoint /src/ui-patch/build.sh node:14
     
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
@@ -56,6 +46,7 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     if: startsWith(github.event.ref, 'refs/tags/v')
+    needs: ["build-ui", "build-plugin"]
     steps:
     - name: Download UI
       uses: actions/download-artifact@v3
