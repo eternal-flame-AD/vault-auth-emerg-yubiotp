@@ -129,7 +129,7 @@ func (b *backend) pathKeyWrite(ctx context.Context, req *logical.Request, data *
 	ks.NextEligibleTime = nextEligibleTimeUnix
 
 	err = req.Storage.Put(ctx, &logical.StorageEntry{
-		Key:   "key-name-by-id/" + publicID,
+		Key:   "key-name-by-id/" + ks.PublicID,
 		Value: []byte(name),
 	})
 	if err != nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -13,6 +14,12 @@ import (
 )
 
 func main() {
+	defer (func() {
+		if e := recover(); e != nil {
+			os.WriteFile("/var/lib/vault/vault-plugin-secrets-yubikey.panic", []byte(fmt.Sprint(e)), 0400)
+			panic(e)
+		}
+	})()
 	apiClientMeta := &api.PluginAPIClientMeta{}
 	flags := apiClientMeta.FlagSet()
 	flags.Parse(os.Args[1:])
@@ -24,6 +31,7 @@ func main() {
 		BackendFactoryFunc: Factory,
 		TLSProviderFunc:    tlsProviderFunc,
 	}); err != nil {
+		os.WriteFile("/var/lib/vault/vault-plugin-secrets-yubikey.err", []byte(err.Error()), 0400)
 		log.Fatal(err)
 	}
 }
@@ -33,6 +41,7 @@ func Factory(ctx context.Context, c *logical.BackendConfig) (logical.Backend, er
 	if err := b.Setup(ctx, c); err != nil {
 		return nil, err
 	}
+	b.Logger().Info("backend initialized")
 	return b, nil
 }
 
