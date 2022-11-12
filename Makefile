@@ -72,11 +72,11 @@ define make-xc-target
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT} (excluded)"
   else
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT}"
-		@bin="pkg/${1}_${2}/${NAME}${3}"
-		@docker run \
+		$(eval bin="pkg/${NAME}${3}_${1}_${2}")
+		@mkdir -p $(shell dirname $(bin))
+		docker run \
 			--interactive \
 			--rm \
-			--dns="8.8.8.8" \
 			--volume="${CURRENT_DIR}:/go/src/${PROJECT}" \
 			--workdir="/go/src/${PROJECT}" \
 			"golang:${GOVERSION}" \
@@ -86,10 +86,10 @@ define make-xc-target
 				GOARCH="${2}" \
 				go build \
 				  -a \
-					-o="pkg/$(bin)" \
+					-o="$(bin)" \
 					-ldflags "${LD_FLAGS}" \
 					-tags "${GOTAGS}"
-		@sha256sum $(bin) | cut -d' ' -f1 | tee $(bin).sha256
+		sha256sum $(bin) | cut -d' ' -f1 | tee $(bin).sha256
   endif
   .PHONY: $1/$2
 
