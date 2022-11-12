@@ -72,11 +72,10 @@ define make-xc-target
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT} (excluded)"
   else
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT}"
-		@bin="pkg/${1}_${2}/${NAME}${3}"
+		@bin="pkg/${1}_${2}-${NAME}${3}"
 		@docker run \
 			--interactive \
 			--rm \
-			--dns="8.8.8.8" \
 			--volume="${CURRENT_DIR}:/go/src/${PROJECT}" \
 			--workdir="/go/src/${PROJECT}" \
 			"golang:${GOVERSION}" \
