@@ -45,6 +45,13 @@ git apply < /src/ui-patch/vault-ui-auth-emerg-yubiotp.patch
 
 
 make static-dist
+
+if ! type go > /dev/null; then
+	echo "Go not installed, installing using gimme" 
+	eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | \
+		GIMME_GO_VERSION=stable bash)"
+fi
+
 make bin
 
 rm -rf /src/{ui-dist,bin-dist}
