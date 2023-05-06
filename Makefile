@@ -63,11 +63,15 @@ build-ui:
 	docker run --rm -v $(PWD):/src --entrypoint /src/ui-patch/build.sh node:lts -c $(checkout)
 .PHONY: build-ui
 
+pkg-dir:
+	@mkdir -p pkg
+.PHONY: pkg-dir
+
 # Create a cross-compile target for every os-arch pairing. This will generate
 # a make target for each os/arch like "make linux/amd64" as well as generate a
 # meta target (build) for compiling everything.
 define make-xc-target
-  $1/$2:
+  $1/$2: pkg-dir
   ifneq (,$(findstring ${1}/${2},$(XC_EXCLUDE)))
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT} (excluded)"
   else
