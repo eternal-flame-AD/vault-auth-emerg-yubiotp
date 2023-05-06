@@ -19,15 +19,25 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - uses: actions/checkout@v3
+    
+    - uses: actions/setup-go@v4
+      with:
+         go-version: '>=1.20.3'
+    
     # Runs a single command using the runners shell
     - name: Build UI
       run: docker run --rm -v $(pwd):/src --entrypoint /src/ui-patch/build.sh node:lts
     
-    - name: Upload Artifact
+    - name: Upload UI Artifact
       uses: actions/upload-artifact@v3
       with:
         name: vault-ui
         path: ui-dist
+    - name: Upload Binary Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: vault
+        path: bin-dist/vault
 
   build-plugin:
     # The type of runner that the job will run on
@@ -55,6 +65,10 @@ jobs:
       with:
         name: vault-ui
         path: vault-ui
+    - name: Download UI Binary
+      uses: actions/download-artifact@v3
+      with:
+        name: vault
     - name: Tarball UI
       run: tar -czf vault-ui.tar.gz vault-ui && rm -rf vault-ui
     - name: Download package
