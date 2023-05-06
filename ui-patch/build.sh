@@ -50,6 +50,7 @@ if ! type go > /dev/null; then
 	echo "Go not installed, installing using gimme" 
 	eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | \
 		GIMME_GO_VERSION=stable bash)"
+  mkdir -p ~/go/bin
 fi
 
 make bin
