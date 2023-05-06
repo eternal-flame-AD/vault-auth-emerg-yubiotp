@@ -29,6 +29,7 @@ func (b *backend) pathAuthLogin(ctx context.Context, req *logical.Request, d *fr
 	keyFound := false
 	var key keyState
 
+	// look up if the key is on record
 	entry, err := req.Storage.Get(ctx, "key-name-by-id/"+keyPublicId)
 	if err != nil {
 		return nil, err
@@ -47,6 +48,7 @@ func (b *backend) pathAuthLogin(ctx context.Context, req *logical.Request, d *fr
 		}
 	}
 
+	// key is not on file
 	if !keyFound {
 		return logical.ErrorResponse("sorry, this key is not allowed"), logical.ErrPermissionDenied
 	}
@@ -55,6 +57,7 @@ func (b *backend) pathAuthLogin(ctx context.Context, req *logical.Request, d *fr
 		return logical.ErrorResponse("sorry, this key is disabled"), logical.ErrPermissionDenied
 	}
 
+	// eligible to login
 	if key.NextEligibleTime > 0 && time.Now().Unix() > key.NextEligibleTime {
 		return &logical.Response{
 			Auth: &logical.Auth{
@@ -82,6 +85,8 @@ func (b *backend) pathAuthLogin(ctx context.Context, req *logical.Request, d *fr
 
 	nextEligibleUpdated := false
 	returnMsg := ""
+
+	// already waiting for a no-notify approval, try sending a notification again
 	if key.NextEligibleTime == 0 || key.NextEligibleTime > time.Now().Add(time.Duration(key.DelayMail)*time.Minute).Unix() {
 		if sent, err := b.sendNotificationEmail(ctx, req, &key); err != nil {
 			returnMsg += "Email notification failed: " + err.Error() + ". \n"
@@ -92,6 +97,7 @@ func (b *backend) pathAuthLogin(ctx context.Context, req *logical.Request, d *fr
 		}
 	}
 
+	// for some reason already waiting for a longer time but current configured delay is shorter, update the wait time
 	if key.NextEligibleTime == 0 || key.NextEligibleTime > time.Now().Add(time.Duration(key.Delay)*time.Minute).Unix() {
 		key.NextEligibleTime = time.Now().Add(time.Duration(key.Delay) * time.Minute).Unix()
 		nextEligibleUpdated = true
