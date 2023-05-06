@@ -15,7 +15,7 @@ GOTAGS ?=
 GOMAXPROCS ?= 4
 
 # Get the project metadata
-GOVERSION := 1.19
+GOVERSION := 1.20
 PROJECT := $(CURRENT_DIR:$(GOPATH)/src/%=%)
 OWNER := $(notdir $(patsubst %/,%,$(dir $(PROJECT))))
 NAME := $(notdir $(PROJECT))
@@ -60,7 +60,7 @@ __check_defined = \
 build-ui:
 	@echo "==> Building UI"
 	$(call check_defined, checkout, vault source tag to checkout)
-	docker run --rm -v $(PWD):/src --entrypoint /src/ui-patch/build.sh node:14 -c $(checkout)
+	docker run --rm -v $(PWD):/src --entrypoint /src/ui-patch/build.sh node:lts -c $(checkout)
 .PHONY: build-ui
 
 # Create a cross-compile target for every os-arch pairing. This will generate

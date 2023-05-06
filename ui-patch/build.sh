@@ -45,8 +45,9 @@ git apply < /src/ui-patch/vault-ui-auth-emerg-yubiotp.patch
 
 
 make static-dist
-
+make bin
 
 rm -rf /src/ui-dist
 mkdir -p /src/ui-dist
 cp -r http/web_ui/* /src/ui-dist
+
