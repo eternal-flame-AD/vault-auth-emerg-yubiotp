@@ -86,6 +86,7 @@ define make-xc-target
 				go build \
 				  -a \
 					-o="pkg/$(bin)" \
+					-buildvcs=false
 					-ldflags "${LD_FLAGS}" \
 					-tags "${GOTAGS}"
 		@sha256sum $(bin) | cut -d' ' -f1 | tee $(bin).sha256
