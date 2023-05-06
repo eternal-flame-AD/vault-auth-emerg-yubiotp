@@ -121,10 +121,10 @@ func (b *backend) pathAuthLogin(ctx context.Context, req *logical.Request, d *fr
 		returnMsg += "Your wait time is not updated.\n"
 	}
 	return logical.ErrorResponse(
-		"%sYou need to wait until %v (approx %v mins) before you could be authorized.",
+		"%sYou need to wait until %v (approx. %d mins) before you could be authorized.",
 		returnMsg,
 		time.Unix(key.NextEligibleTime, 0),
-		time.Until(time.Unix(key.NextEligibleTime, 0)).Minutes(),
+		(int64)(time.Until(time.Unix(key.NextEligibleTime, 0)).Minutes()),
 	), logical.ErrPermissionDenied
 }
 

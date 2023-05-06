@@ -62,12 +62,13 @@ func (b *backend) pathKeys() []*framework.Path {
 				},
 			}},
 		{
-			Pattern: `key`,
+			Pattern: `key/?$`,
 			Operations: map[logical.Operation]framework.OperationHandler{
 				logical.ListOperation: &framework.PathOperation{
 					Callback: b.pathKeyList,
 				},
 			},
+			HelpSynopsis: "List all keys",
 		},
 	}
 }

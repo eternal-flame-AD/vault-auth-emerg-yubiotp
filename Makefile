@@ -72,7 +72,6 @@ define make-xc-target
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT} (excluded)"
   else
 		@printf "%s%20s %s\n" "-->" "${1}/${2}:" "${PROJECT}"
-		@bin="pkg/${1}_${2}-${NAME}${3}"
 		@docker run \
 			--interactive \
 			--rm \
@@ -85,11 +84,11 @@ define make-xc-target
 				GOARCH="${2}" \
 				go build \
 				  -a \
-					-o="pkg/$(bin)" \
+					-o="pkg/${NAME}-${1}-${2}${3}" \
 					-buildvcs=false \
 					-ldflags "${LD_FLAGS}" \
 					-tags "${GOTAGS}"
-		@sha256sum $(bin) | cut -d' ' -f1 | tee $(bin).sha256
+		@sha256sum "pkg/${NAME}-${1}-${2}${3}" | cut -d' ' -f1 | tee "pkg/${NAME}-${1}-${2}${3}.sha256"
   endif
   .PHONY: $1/$2
 
