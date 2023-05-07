@@ -179,6 +179,7 @@ func (b *backend) pathKeyRead(ctx context.Context, req *logical.Request, data *f
 			"name":               name,
 			"alias":              ks.Alias,
 			"public_id":          ks.PublicID,
+			"entity_id":          ks.EntityID,
 			"delay":              ks.Delay,
 			"delay_mail":         ks.DelayMail,
 			"next_eligible_time": ks.NextEligibleTime,
