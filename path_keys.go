@@ -60,6 +60,9 @@ func (b *backend) pathKeys() []*framework.Path {
 				logical.ReadOperation: &framework.PathOperation{
 					Callback: b.pathKeyRead,
 				},
+				logical.DeleteOperation: &framework.PathOperation{
+					Callback: b.pathKeyDelete,
+				},
 			}},
 		{
 			Pattern: `key/?$`,
@@ -171,6 +174,33 @@ func (b *backend) pathKeyRead(ctx context.Context, req *logical.Request, data *f
 		},
 	}, nil
 
+}
+
+func (b *backend) pathKeyDelete(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+	name := data.Get("name").(string)
+	entry, err := req.Storage.Get(ctx, "key/"+name)
+	if err != nil {
+		return nil, err
+	}
+	if entry == nil {
+		return logical.ErrorResponse("could not find key named %s", name), logical.ErrInvalidRequest
+	}
+
+	var ks keyState
+	if err := entry.DecodeJSON(&ks); err != nil {
+		return nil, err
+	}
+
+	if err := req.Storage.Delete(ctx, "key/"+name); err != nil {
+		return nil, err
+	}
+
+	// this is not critical
+	if err := req.Storage.Delete(ctx, "key-name-by-id/"+ks.PublicID); err != nil {
+		return nil, nil
+	}
+
+	return nil, nil
 }
 
 func (b *backend) pathKeyList(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {

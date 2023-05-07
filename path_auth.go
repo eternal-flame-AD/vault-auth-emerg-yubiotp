@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -57,19 +58,28 @@ func (b *backend) pathAuthLogin(ctx context.Context, req *logical.Request, d *fr
 		return logical.ErrorResponse("sorry, this key is disabled"), logical.ErrPermissionDenied
 	}
 
+	keyHumanName := fmt.Sprintf("emergency-key-%s-%s", key.Name, keyPublicId)
+	keyAlias := keyHumanName
+	if key.Alias != "" {
+		keyAlias = key.Alias
+	}
+
 	// eligible to login
 	if key.NextEligibleTime > 0 && time.Now().Unix() > key.NextEligibleTime {
 		return &logical.Response{
 			Auth: &logical.Auth{
-				DisplayName: "Emergency Yubikey " + keyPublicId,
+				DisplayName: keyHumanName,
 				InternalData: map[string]interface{}{
-					"auth_method": "emerg-yubiotp",
+					"auth_method":           "emerg-yubiotp",
+					"emerg_yubiotp_keyname": key.Name,
 				},
 				Policies: []string{"emerg-yubiotp", "default"},
 				Metadata: map[string]string{
 					"session_counter":      sessionCounter,
 					"session_counter_used": sessionUseCounter,
 					"yubikey_public_id":    keyPublicId,
+					"yubikey_name":         key.Name,
+					"yubikey_alias":        keyAlias,
 				},
 				LeaseOptions: logical.LeaseOptions{
 					TTL:       1 * time.Hour,
@@ -77,7 +87,7 @@ func (b *backend) pathAuthLogin(ctx context.Context, req *logical.Request, d *fr
 					Renewable: true,
 				},
 				Alias: &logical.Alias{
-					Name: "Emergency Key " + keyPublicId,
+					Name: keyAlias,
 				},
 			},
 		}, nil
@@ -133,5 +143,30 @@ func (b *backend) pathAuthRenew(ctx context.Context, req *logical.Request, d *fr
 		return nil, errors.New("request auth was nil")
 	}
 
-	return framework.LeaseExtend(30*time.Second, 60*time.Minute, b.System())(ctx, req, d)
+	keyName, ok := req.Auth.InternalData["emerg_yubiotp_keyname"].(string)
+	if !ok {
+		return nil, errors.New("request auth internal key data was nil, try re-authenticating")
+	}
+
+	var ks keyState
+	entry, err := req.Storage.Get(ctx, "key/"+keyName)
+	if err != nil {
+		return nil, err
+	}
+	if entry == nil {
+		return nil, errors.New("key not found")
+	}
+	if err := entry.DecodeJSON(&ks); err != nil {
+		return nil, err
+	}
+
+	if ks.NextEligibleTime < 0 {
+		return logical.ErrorResponse("sorry, this key is disabled"), logical.ErrPermissionDenied
+	}
+
+	if ks.NextEligibleTime > 0 && time.Now().Unix() > ks.NextEligibleTime {
+		return framework.LeaseExtend(30*time.Second, 60*time.Minute, b.System())(ctx, req, d)
+	}
+
+	return logical.ErrorResponse("sorry, you are not eligible to renew your lease"), logical.ErrPermissionDenied
 }
