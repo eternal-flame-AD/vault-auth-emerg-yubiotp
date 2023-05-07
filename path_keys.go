@@ -14,6 +14,7 @@ type keyState struct {
 	Name             string `json:"name"`
 	Alias            string `json:"alias"`
 	PublicID         string `json:"public_id"`
+	EntityID         string `json:"entity_id"`
 	NextEligibleTime int64  `json:"next_eligible_time"`
 
 	Delay     int64 `json:"delay"`
@@ -36,6 +37,10 @@ func (b *backend) pathKeys() []*framework.Path {
 				"public_id": {
 					Type:        framework.TypeString,
 					Description: "Public ID of the key",
+				},
+				"entity_id": {
+					Type:        framework.TypeString,
+					Description: "Entity ID associated with the key",
 				},
 				"delay": {
 					Type:        framework.TypeInt,
@@ -108,6 +113,12 @@ func (b *backend) pathKeyWrite(ctx context.Context, req *logical.Request, data *
 		return logical.ErrorResponse("invalid public ID: must be at least 12 characters (6 bytes modhex)"), nil
 	}
 	ks.PublicID = ks.PublicID[:12]
+
+	entityID := strings.TrimSpace(data.Get("entity_id").(string))
+	if entityID != "" {
+		ks.EntityID = entityID
+	}
+
 	delay, ok := data.GetOk("delay")
 	if ok {
 		ks.Delay = int64(delay.(int))
